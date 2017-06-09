@@ -1,6 +1,6 @@
 # Globalticket
 [![Build Status](https://secure.travis-ci.org/henkm/globalticket.png)](http://travis-ci.org/henkm/globalticket)
-[![Gem Version](https://badge.fury.io/rb/globalticket.svg)](http://badge.fury.io/rb/globalticket)
+[![Gem Version](https://badge.fury.io/rb/globalticket.svg)](https://badge.fury.io/rb/globalticket)
 [![Dependency Status](https://gemnasium.com/henkm/globalticket.svg)](https://gemnasium.com/henkm/globalticket)
 [![Code Climate](https://codeclimate.com/github/henkm/globalticket/badges/gpa.svg)](https://codeclimate.com/github/henkm/globalticket)
 
