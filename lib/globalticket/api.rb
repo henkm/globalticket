@@ -80,16 +80,16 @@ module Globalticket
     # - ending with HMAC calculation
     def self.request_data(data)
       # delet data wit nil values
-      data = data.select {|k, v| !v.nil? }
+      data = data.select {|_k, v| !v.nil? }
 
       # merge data with api-key and env
       unsorted_data = { apiKey: Config.api_key, environment: Config.environment }.merge(data)
 
       # sort alphabetically
-      sorted_data = Hash[unsorted_data.sort_by{|k,v| k}]
+      sorted_data = Hash[unsorted_data.sort_by{|k,_v| k}]
 
       # calculate HMAC value
-      calculated_hmac = Base64.encode64(OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), Config.api_secret, sorted_data.to_json.strip)).strip.gsub("\n", "")
+      calculated_hmac = Base64.encode64(OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), Config.api_secret, sorted_data.to_json.strip)).strip.delete("\n")
 
       request_data = sorted_data.merge({"HMACKey" => calculated_hmac})
       # puts request_data.to_json
