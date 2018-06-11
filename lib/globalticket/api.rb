@@ -9,19 +9,19 @@ module Globalticket
     ENDPOINT_PREFIX = "https://globalreseller.nl/webservices"
 
     # returns a list of available users
-    def self.get_available_users
-      self.make_api_call(endpoint: "getAvailableUsers", data: {})
+    def self.get_available_users(environment: nil)
+      self.make_api_call(endpoint: "getAvailableUsers", data: {}, environment: environment)
     end
 
     # return a list of ticket types for given userId
     # Original documentation: https://globalreseller.nl/documentation/api/getTicketTypes
-    def self.get_ticket_types(userId: nil, language: nil)
-      self.make_api_call(endpoint: "getTicketTypes", data: {userId: userId.to_s, language: language})
+    def self.get_ticket_types(userId: nil, language: nil, environment: nil)
+      self.make_api_call(endpoint: "getTicketTypes", data: {userId: userId.to_s, language: language, environment: environment})
     end
 
     # Fetch available periods and time slots
     # https://globalreseller.nl/documentation/api/getAvailability
-    def self.get_availability(userId: nil, start_date: nil, end_date: nil)
+    def self.get_availability(userId: nil, start_date: nil, end_date: nil, environment: nil)
       # set default dates if none are given
       start_date = Time.now if start_date.nil?
       end_date = start_date.to_time + ((3600 * 24) * 30) if end_date.nil? # add 31 days, max allowed
@@ -30,36 +30,37 @@ module Globalticket
       start_date = self.convert_date_object_to_format(date: start_date, format: "%Y-%m-%d")
       end_date   = self.convert_date_object_to_format(date: end_date, format: "%Y-%m-%d")
 
-      self.make_api_call(endpoint: "getAvailability", data: {userId: userId.to_s, startDate: start_date, endDate: end_date})
+      self.make_api_call(endpoint: "getAvailability", data: {userId: userId.to_s, startDate: start_date, endDate: end_date}, environment: environment)
     end
 
     # Create a reservation
     # https://globalreseller.nl/documentation/api/createReservation
-    def self.create_reservation(userId: nil, tickets: [], ticketDate: nil, ticketTime: nil)
+    def self.create_reservation(userId: nil, tickets: [], ticketDate: nil, ticketTime: nil, environment: nil)
 
       # convert dates to required string
       ticketDate = self.convert_date_object_to_format(date: ticketDate, format: "%Y-%m-%d") unless ticketDate.nil?
       ticketTime   = self.convert_date_object_to_format(date: ticketTime, format: "%H:%M") unless ticketTime.nil?
 
-      self.make_api_call(endpoint: "createReservation", data: {userId: userId.to_s, tickets: tickets, ticketDate: ticketDate, ticketTime: ticketTime})
+      self.make_api_call(endpoint: "createReservation", data: {userId: userId.to_s, tickets: tickets, ticketDate: ticketDate, ticketTime: ticketTime}, environment: environment)
     end
 
     # Add a contact to a reservation
     # https://globalreseller.nl/documentation/api/addContact
     def self.add_contact(data = {})
-      self.make_api_call(endpoint: "addContact", data: data)
+      environment = data[:environment]
+      self.make_api_call(endpoint: "addContact", data: data, environment: environment)
     end
 
     # Complete a reservation
     # https://globalreseller.nl/documentation/api/completeReservation
-    def self.complete_reservation(userId: nil, reservationId: nil)
-      self.make_api_call(endpoint: "completeReservation", data: {userId: userId.to_s, reservationId: reservationId.to_s})
+    def self.complete_reservation(userId: nil, reservationId: nil, environment: nil)
+      self.make_api_call(endpoint: "completeReservation", data: {userId: userId.to_s, reservationId: reservationId.to_s}, environment: environment)
     end
 
     # Complete a reservation
     # https://globalreseller.nl/documentation/api/cancelReservation
-    def self.cancel_reservation(userId: nil, reservationId: nil)
-      self.make_api_call(endpoint: "cancelReservation", data: {userId: userId.to_s, reservationId: reservationId.to_s})
+    def self.cancel_reservation(userId: nil, reservationId: nil, environment: nil)
+      self.make_api_call(endpoint: "cancelReservation", data: {userId: userId.to_s, reservationId: reservationId.to_s}, environment: environment)
     end
 
     def self.convert_date_object_to_format(date: nil, format: "%Y-%m-%d")
@@ -78,12 +79,15 @@ module Globalticket
     # return the request data as needed for the API
     # - sorted alphabetically
     # - ending with HMAC calculation
-    def self.request_data(data)
+    def self.request_data(data, environment: nil)
+      # if environment is not set, use from config
+      environment = Config.environment unless environment
+
       # delet data wit nil values
       data = data.select {|_k, v| !v.nil? }
 
       # merge data with api-key and env
-      unsorted_data = { apiKey: Config.api_key, environment: Config.environment }.merge(data)
+      unsorted_data = { apiKey: Config.api_key, environment: environment }.merge(data)
 
       # sort alphabetically
       sorted_data = Hash[unsorted_data.sort_by{|k,_v| k}]
@@ -98,11 +102,11 @@ module Globalticket
 
     # communicate with the API via POST requests and return the return
     # message in a ruby-esque manor.
-    def self.make_api_call(endpoint: '', data: {})
+    def self.make_api_call(endpoint: '', data: {}, environment: nil)
       url = "#{ENDPOINT_PREFIX}/#{endpoint}"
-      # puts "posting to URL: #{url}:\n#{self.request_data(data)}"
+      # puts "posting to URL: #{url}:\n#{self.request_data(data, environment: environment)}"
       result = JSON.parse(HTTParty.post(url,
-                body: self.request_data(data).to_json,
+                body: self.request_data(data, environment: environment).to_json,
                 headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json' }).body)
       if result["success"] == false
         raise result["errorMessage"]
