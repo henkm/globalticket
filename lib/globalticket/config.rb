@@ -6,6 +6,7 @@ module Globalticket::Config
     attr_accessor :api_key
     attr_accessor :api_secret
     attr_accessor :environment
+    attr_accessor :verbose
 
 
     # Set's the default value's to nil and false
@@ -14,7 +15,8 @@ module Globalticket::Config
       @defaults = {
         :@api_key   => nil,
         :@api_secret => nil,
-        :@environment => 'test'
+        :@environment => 'test',
+        :@verbose => false
       }
     end
 

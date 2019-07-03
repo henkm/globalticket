@@ -104,14 +104,16 @@ module Globalticket
     # message in a ruby-esque manor.
     def self.make_api_call(endpoint: '', data: {}, environment: nil)
       url = "#{ENDPOINT_PREFIX}/#{endpoint}"
-      # puts "posting to URL: #{url}:\n#{self.request_data(data, environment: environment)}"
+      puts "posting to URL: #{url}:\n#{self.request_data(data, environment: environment)}" if Config.verbose
       result = JSON.parse(HTTParty.post(url,
                 body: self.request_data(data, environment: environment).to_json,
                 headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json' }).body)
       if result["success"] == false
         raise result["errorMessage"]
       else
-        # puts result
+        if Config.verbose
+          puts result 
+        end
         return result
       end
     end
